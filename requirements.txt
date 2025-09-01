@@ -1,0 +1,6 @@
+pandas
+scikit-learn
+requests
+flask
+googletrans
+deep-translator

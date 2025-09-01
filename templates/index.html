@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fake News Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .result, .explanation-tab {
+            margin-top: 20px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .result {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .explanation-tab h3 {
+            margin-bottom: 10px;
+            color: #222;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .chat-bubble {
+            background: #f9f9f9;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 0 3px rgba(0,0,0,0.05);
+        }
+        .highlight {
+            font-weight: bold;
+            color: black;
+            background-color: #ffe600;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .risk-meter {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+        .danger { background-color: #dc3545; }
+        .warning { background-color: #ffc107; color: black; }
+        .safe { background-color: #28a745; }
+    </style>
+</head>
+<body>
+    <h2>📰 Fake News Detection (Tamil + English)</h2>
+    <form method="POST">
+        <label>Enter News Text (Tamil or English):</label>
+        <textarea name="news" rows="5" required>{{ original_text }}</textarea>
+        <button type="submit">Analyse</button>
+    </form>
+
+    {% if result_en %}
+        <div class="result">
+            <p><strong>Result (English):</strong> {{ result_en }}</p>
+            {% if result_ta %}
+                <p><strong>Result (Tamil):</strong> {{ result_ta }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if risk_label %}
+        <div class="risk-meter {{ risk_color }}">
+            🔎 Risk Level: {{ risk_label }}
+        </div>
+    {% endif %}
+
+    {% if suspicious or emotional or source_status %}
+        <div class="explanation-tab">
+            <h3>🔍 Extra Analysis</h3>
+            <p><strong>Suspicious Words:</strong> {{ suspicious | join(', ') if suspicious else 'None' }}</p>
+            <p><strong>Emotional Tone:</strong> {{ emotional | join(', ') if emotional else 'None' }}</p>
+            <p><strong>Source Check:</strong> {{ source_status }}</p>
+        </div>
+    {% endif %}
+
+    {% if explanation_en %}
+        <div class="explanation-tab">
+            <h3>🧠 Explanation (English)</h3>
+            {% for paragraph in explanation_en.split('\n') %}
+                <div class="chat-bubble">
+                    {{ paragraph | safe | replace("misinformation", "<span class='highlight'>misinformation</span>")
+                                   | replace("exaggeration", "<span class='highlight'>exaggeration</span>")
+                                   | replace("lack of credibility", "<span class='highlight'>lack of credibility</span>")
+                                   | replace("fake", "<span class='highlight'>fake</span>")
+                                   | replace("real", "<span class='highlight'>real</span>") }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+        {% if explanation_ta %}
+        <div class="explanation-tab">
+            <h3>🧠 Explanation (Tamil)</h3>
+            {% for paragraph in explanation_ta.split('\n') %}
+                <div class="chat-bubble">
+                    {{ paragraph | safe
+                        | replace("தவறான தகவல்", "<span class='highlight'>தவறான தகவல்</span>")
+                        | replace("அதிகப்படுத்தல்", "<span class='highlight'>அதிகப்படுத்தல்</span>")
+                        | replace("நம்பகத்தன்மை இல்லை", "<span class='highlight'>நம்பகத்தன்மை இல்லை</span>")
+                        | replace("பொய்", "<span class='highlight'>பொய்</span>")
+                        | replace("உண்மை", "<span class='highlight'>உண்மை</span>") }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+{% if manipulation_techniques %}
+    <div class="explanation-tab">
+        <h3>🧠 Manipulation Techniques Detected</h3>
+        <ul>
+            {% for technique in manipulation_techniques %}
+                <li><span class="highlight">{{ technique }}</span></li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% if biases_detected %}
+    <div class="explanation-tab">
+        <h3>🧠 Cognitive Bias Reflection</h3>
+        <ul>
+            {% for bias, prompt in biases_detected %}
+                <li><span class="highlight">{{ bias }}</span>: {{ prompt }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<div class="explanation-tab">
+    <h3>🧑‍🤝‍🧑 Community Verification</h3>
+    <form method="POST">
+        <input type="hidden" name="original_text" value="{{ original_text }}">
+        <label>Do you find this news suspicious?</label><br>
+        <input type="radio" name="flag" value="yes"> Yes
+        <input type="radio" name="flag" value="no"> No<br><br>
+
+        <label>Add a source or counterclaim (optional):</label><br>
+        <textarea name="user_source" rows="2"></textarea><br><br>
+
+        <label>Vote on credibility:</label><br>
+        <input type="radio" name="vote" value="credible"> Credible
+        <input type="radio" name="vote" value="not_credible"> Not Credible<br><br>
+
+        <button type="submit" name="submit_community">Submit Feedback</button>
+    </form>
+</div>
+
+{% if community_feedback %}
+    <div class="explanation-tab">
+        <h3>🌐 Community Insights</h3>
+        <ul>
+            {% for fb in community_feedback %}
+                <li>
+                    <strong>Flagged:</strong> {{ fb.flag }} |
+                    <strong>Vote:</strong> {{ fb.vote }}<br>
+                    {% if fb.user_source %}
+                        <strong>Source:</strong> {{ fb.user_source }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% if error %}
+  <p style="color:red;">{{ error }}</p>
+{% endif %}
+</body>
+</html>
