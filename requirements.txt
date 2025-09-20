@@ -5,3 +5,4 @@ flask
 googletrans
 deep-translator
 twilio
+python-dotenv
