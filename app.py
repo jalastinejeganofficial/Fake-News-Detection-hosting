@@ -2,18 +2,20 @@ from flask import Flask, render_template, request
 import pickle
 import requests
 import re
+import os
 from deep_translator import GoogleTranslator
 from twilio.twiml.messaging_response import MessagingResponse
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 app = Flask(__name__)
 
 # Load model and vectorizer
 model = pickle.load(open("model.pkl", "rb"))
 vectorizer = pickle.load(open("vectorizer.pkl", "rb"))
-
-# OpenRouter API key
-API_KEY = "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"
 
 # Keyword lists
 SUSPICIOUS_WORDS = ["miracle", "shocking", "exclusive", "urgent", "cure", "secret", "breaking"]
@@ -162,11 +164,9 @@ def whatsapp():
     result = "REAL news ✅" if pred == 1 else "FAKE news ❌"
     explanation = explain_news(translated_text, pred)
 
-    # Format response using TwiML
     response = MessagingResponse()
     response.message(f"{result}\n\nExplanation:\n{explanation}")
     return str(response)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
